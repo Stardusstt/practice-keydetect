@@ -1,12 +1,7 @@
-
 import matplotlib
 import matplotlib.pyplot as pyplot
-import numpy
 
 
-
-
-#
 
 class Plot:
     
@@ -64,19 +59,13 @@ class Plot:
                     ax.set_ylabel( 'accuracy' )  
                     ax.set_title( type_name ) 
                     ax.legend()
-
-
-
-
-        
-
     
+
         #
         pyplot.savefig( type_name + "_" + chromagram_method + ".png" , format='png' )
         #pyplot.show()
 
     def type( self , result_dict , type_name , midi=False ):
-
 
         if midi == False :
 
