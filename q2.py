@@ -1,7 +1,7 @@
 import pathlib
 
 from libkeydetect import report
-
+from libkeydetect import plot
 
 
 def swd_dataset( path , child_name , type_name ):
@@ -35,29 +35,45 @@ if __name__ == '__main__':
 
 
     report_cls = report.Report()
+    plot_cls = plot.Plot()
 
 
     # ['FI66', 'FI80', 'HU33', 'SC06', 'score_midi']
 
     # score_midi
     print( "score_midi" )
-    print( report_cls.type( root_path , 'score_midi' , child_rule=swd_dataset , csv_file=score_midi_csv , midi=True ) )
+    result_score_midi = report_cls.type( root_path , 'score_midi' , child_rule=swd_dataset , csv_file=score_midi_csv , midi=True )
+    print( result_score_midi )
+
+    plot_cls.type( result_score_midi , 'score_midi' , midi=True )
 
     # HU33
     print( "HU33" )
-    print( report_cls.type( root_path , 'HU33' , child_rule=swd_dataset , csv_file=HU33_csv , midi=False ) )
+    result_score_HU33 =  report_cls.type( root_path , 'HU33' , child_rule=swd_dataset , csv_file=HU33_csv , midi=False ) 
+    print( result_score_HU33 )
+
+    plot_cls.type( result_score_HU33 , 'HU33' )
 
     # SC06
     print( "SC06" )
-    print( report_cls.type( root_path , 'SC06' , child_rule=swd_dataset , csv_file=SC06_csv , midi=False ) )
-    
+    result_score_SC06 = report_cls.type( root_path , 'SC06' , child_rule=swd_dataset , csv_file=SC06_csv , midi=False ) 
+    print( result_score_SC06 )
+
+    plot_cls.type( result_score_SC06 , 'SC06' )
+
     # FI66
     print( "FI66" )
-    print( report_cls.type( root_path , 'FI66' , child_rule=swd_dataset , csv_file=FI66_csv , midi=False ) )
+    result_score_FI66 =  report_cls.type( root_path , 'FI66' , child_rule=swd_dataset , csv_file=FI66_csv , midi=False ) 
+    print( result_score_FI66 )
+
+    plot_cls.type( result_score_FI66 , 'FI66' )
 
     # FI80
     print( "FI80" )
-    print( report_cls.type( root_path , 'FI80' , child_rule=swd_dataset , csv_file=FI80_csv , midi=False ) )
+    result_score_FI80 = report_cls.type( root_path , 'FI80' , child_rule=swd_dataset , csv_file=FI80_csv , midi=False ) 
+    print( result_score_FI80 )
+
+    plot_cls.type( result_score_FI80 , 'FI80' )
 
 
 
