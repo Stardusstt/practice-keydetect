@@ -8,6 +8,8 @@ import mir_eval
 class Chromagram:
 
     def __init__( self , file_path , midi=False ):
+
+        self.midi_arg = midi
         
         if midi == False :
             
@@ -15,10 +17,15 @@ class Chromagram:
 
         if midi == True :
             
+            # pretty_midi doesn't support pathlib.Path
             self.midi_data = pretty_midi.PrettyMIDI( str( file_path ) )
             
 
     def stft( self ):
+        '''Compute stft chromagram'''
+
+        if self.midi_arg == True :
+            raise TypeError("You can only use Chromagram.midi for midi file.")
         
         #  The default value, n_fft=2048
         chromagram_stft = librosa.feature.chroma_stft( y=self.audio_time_series , sr=self.sampling_rate )
@@ -26,18 +33,30 @@ class Chromagram:
         return chromagram_stft
 
     def cqt( self ):
+        '''Compute cqt chromagram'''
+
+        if self.midi_arg == True :
+            raise TypeError("You can only use Chromagram.midi for midi file.")
         
         chromagram_cqt = librosa.feature.chroma_cqt( y=self.audio_time_series , sr=self.sampling_rate )
 
         return chromagram_cqt
 
     def cens( self ):
+        '''Compute cens chromagram'''
+
+        if self.midi_arg == True :
+            raise TypeError("You can only use Chromagram.midi for midi file.")
         
         chromagram_cens = librosa.feature.chroma_cens( y=self.audio_time_series , sr=self.sampling_rate )
 
         return chromagram_cens
 
     def midi( self ):
+        '''Compute chromagram for midi file'''
+
+        if self.midi_arg == False :
+            raise TypeError("Only midi file can use Chromagram.midi.")
         
         # get single instrument chroma
         for instrument in self.midi_data.instruments :
@@ -66,10 +85,15 @@ class Detector:
         self.binary_C_major_template = numpy.array( [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1] )
         self.binary_C_minor_template = numpy.array( [1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0] )
 
-    # correlation coefficient list
+
     def __corrcoef( self , template_list ):
+        """
+        Compute correlation coefficient.
+
+        :rtype: list
+        """
         
-        corrcoef_list = list()
+        corrcoef_list = []
 
         for template in template_list :
             
@@ -81,8 +105,12 @@ class Detector:
         #
         return corrcoef_list
     
-    # find maximum
     def __max( self , corrcoef_major_list , corrcoef_minor_list ):
+        """
+        Find maximum correlation coefficient.
+
+        :rtype: str
+        """
         
         # find maximum value in list
         major_maximum = max( corrcoef_major_list )
@@ -129,8 +157,12 @@ class Detector:
         #
         return maximum_key
 
-    # get harmonic c note list
-    def __harmonic_c_note( self , alpha ):
+    def __get_harmonic_c_note( self , alpha: int ):
+        """
+        Get harmonic c note list.
+
+        :rtype: list
+        """
 
         # C_note array with 12 elements
         C_note_list = [None] * 12
@@ -175,10 +207,14 @@ class Detector:
         #
         return C_note_list
 
-    # get k_s template list
-    def __k_s_template_list( self , K_S_template ):
+    def __get_k_s_template_list( self , K_S_template ):
+        """
+        Get k_s template list.
+
+        :rtype: list
+        """
         
-        k_s_template_list = list()
+        k_s_template_list = []
 
         # rotated with pitch_class
         for index , pitch in enumerate( self.pitch_class_list ) :
@@ -191,10 +227,14 @@ class Detector:
         #
         return k_s_template_list
 
-    # get harmonic template list
-    def __harmonic_template_list( self , c_note_list , binary_C_template ):
+    def __get_harmonic_template_list( self , c_note_list , binary_C_template ):
+        """
+        Get harmonic template list.
+
+        :rtype: list
+        """
         
-        harmonic_template_list = list()
+        harmonic_template_list = []
 
         # rotated with pitch_class
         for index , pitch in enumerate( self.pitch_class_list ):
@@ -223,15 +263,19 @@ class Detector:
         return harmonic_template_list
     
     def binary( self ):
+        """
+        Compute estimated_key with binary method.
+
+        :rtype: str
+        """
 
         #     
         # estimate tonic
-
+        
         # maximum value index
         chroma_array_maximum_index = self.chroma_array.argmax()
 
         tonic_estimate = self.pitch_class_list[chroma_array_maximum_index]
-
 
         #
         # get rotated template
@@ -264,6 +308,11 @@ class Detector:
         return estimated_key
 
     def k_s( self ):
+        """
+        Compute estimated_key with k_s method.
+
+        :rtype: str
+        """
         
         # K_S C template
         K_S_C_major_template = numpy.array( [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88] )
@@ -271,8 +320,8 @@ class Detector:
 
 
         # get k_s template list
-        k_s_major_template_list = self.__k_s_template_list( K_S_C_major_template )
-        k_s_minor_template_list = self.__k_s_template_list( K_S_C_minor_template )
+        k_s_major_template_list = self.__get_k_s_template_list( K_S_C_major_template )
+        k_s_minor_template_list = self.__get_k_s_template_list( K_S_C_minor_template )
 
         # correlation coefficient
         corrcoef_major_list = self.__corrcoef( k_s_major_template_list )
@@ -285,14 +334,19 @@ class Detector:
         return estimated_key
 
     def harmonic( self ):
+        """
+        Compute estimated_key with harmonic method.
+
+        :rtype: str
+        """
         
         # get c_note_list with alpha = 0.9
-        c_note_list = self.__harmonic_c_note( 0.9 )
+        c_note_list = self.__get_harmonic_c_note( 0.9 )
         
 
         # get harmonic template list
-        harmonic_major_template_list = self.__harmonic_template_list( c_note_list , self.binary_C_major_template )
-        harmonic_minor_template_list = self.__harmonic_template_list( c_note_list , self.binary_C_minor_template )
+        harmonic_major_template_list = self.__get_harmonic_template_list( c_note_list , self.binary_C_major_template )
+        harmonic_minor_template_list = self.__get_harmonic_template_list( c_note_list , self.binary_C_minor_template )
         
         # correlation coefficient
         corrcoef_major_list = self.__corrcoef( harmonic_major_template_list )
@@ -317,7 +371,12 @@ class Score:
         self.estimated_key = estimated_key
         self.reference_key = reference_key
 
-    def raw( self ):
+    def raw( self ) -> int:
+        """
+        Compute raw score.
+
+        :rtype: int
+        """
         
         if self.estimated_key == self.reference_key :
 
@@ -329,7 +388,12 @@ class Score:
 
         return score
 
-    def weighted( self ):
+    def weighted( self ) -> float:
+        """
+        Compute weighted score.
+
+        :rtype: float
+        """
         
         score = mir_eval.key.weighted_score( self.reference_key , self.estimated_key )
 

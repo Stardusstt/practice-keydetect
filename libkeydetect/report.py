@@ -5,43 +5,13 @@ import csv
 
 from . import path
 from . import detector
-
+from . import plot
 
 
 class Report:
 
     def __init__( self ):
         pass
-
-    def __negative_list( self , file_list ):
-
-        negative_list = list()
-        
-        for index , file_path in enumerate( file_list ) :
-            
-            with open( file_path , 'r' ) as file:
-
-                value = file.read()
-
-                # str to int
-                value_int = int(value)
-
-                # check if value_int is negative
-                if value_int < 0 :
-
-                    negative_list.append( index )
-                    
-        
-        #
-        return negative_list
-
-    def __del_negative_file( self , file_list , del_list ):
-
-        # remove index in del_list
-        file_list = numpy.delete( file_list, del_list ).tolist()
-
-        #
-        return file_list
 
     def __stft_method( self , chromagram ):
         
@@ -103,7 +73,7 @@ class Report:
         #
         return midi_method_result
 
-    def __score_dict( self , estimated_key , reference_key ):
+    def __get_score( self , estimated_key , reference_key ):
         
         # create template
         score_dict = { 'raw': None, 'weighted': None }
@@ -117,7 +87,7 @@ class Report:
         #
         return score_dict
         
-    def __score_all_dict( self , result_dict , reference_key ):
+    def __get_score_all( self , result_dict , reference_key ):
         
         # create template
         score_all_dict = { 'binary': None, 'k_s': None, 'harmonic': None }
@@ -125,7 +95,7 @@ class Report:
         # calculate all score
         for method , estimated_key in result_dict.items() :
             
-            temp_dict = self.__score_dict( estimated_key , reference_key )
+            temp_dict = self.__get_score( estimated_key , reference_key )
             
             score_all_dict[ method ] = temp_dict
             
@@ -135,7 +105,7 @@ class Report:
 
     def __dict_to_list( self , dict_ , midi=False ):
         
-        temp_list = list()
+        temp_list = []
 
         # create list which need to output
         write_list_chromagram = [ 'stft','cqt','cens' ]
@@ -166,7 +136,7 @@ class Report:
 
     def __array_to_dict( self , numpy_array , midi=False ):
         
-        temp_dict = dict()
+        temp_dict = {}
 
         # create list which need to output
         write_list_chromagram = [ 'stft','cqt','cens' ]
@@ -256,9 +226,9 @@ class Report:
             result_dict = { 'stft': None, 'cqt': None, 'cens': None }
             
             # calculate score
-            result_dict['stft'] = self.__score_all_dict( stft_result , reference_key )
-            result_dict['cqt'] = self.__score_all_dict( cqt_result , reference_key )
-            result_dict['cens'] = self.__score_all_dict( cens_result , reference_key )
+            result_dict['stft'] = self.__get_score_all( stft_result , reference_key )
+            result_dict['cqt'] = self.__get_score_all( cqt_result , reference_key )
+            result_dict['cens'] = self.__get_score_all( cens_result , reference_key )
 
         if midi == True :
             
@@ -266,7 +236,7 @@ class Report:
             midi_result = self.__midi_method( chromagram )
 
             # calculate score
-            result_dict = self.__score_all_dict( midi_result , reference_key )
+            result_dict = self.__get_score_all( midi_result , reference_key )
 
 
         # return score
@@ -274,6 +244,8 @@ class Report:
     
     def type( self , root_path , type_name , child_rule = path.child_rule_default , csv_file=False , midi=False ):
     
+        utils = Utils()
+
         path_cls = path.Path( root_path )
         
         #
@@ -285,22 +257,20 @@ class Report:
             temp_ref = path_cls.get_readfile_list( 'key' , type_name )
             temp_est = path_cls.get_readfile_list( 'wav' , type_name )
 
-            negative_list = self.__negative_list( temp_ref )
+            negative_list = utils.negative_list( temp_ref )
 
-            reference_file_list = self.__del_negative_file( temp_ref , negative_list )
-            estimated_file_list = self.__del_negative_file( temp_est , negative_list )
+            reference_file_list = utils.del_negative_file( temp_ref , negative_list )
+            estimated_file_list = utils.del_negative_file( temp_est , negative_list )
 
         else:
             
             ref_is_key = True
 
-            utils = Utils()
-
             reference_file_list = utils.csv_to_key( csv_file )
             estimated_file_list = path_cls.get_readfile_list( '01_RawData' , type_name , child_rule=child_rule )
 
 
-        #
+        # Create numpy array for compute accuracy
         if midi == False :
 
             temp_array = numpy.zeros(18)
@@ -352,7 +322,7 @@ class Report:
         
         path_cls = path.Path( root_path )
 
-        all_result = dict()
+        all_result = {}
 
         # get all type
         type_list = path_cls.get_type( 'wav' )
@@ -367,6 +337,10 @@ class Report:
             type_result = self.type( root_path , type_name )
             
             all_result[ type_name ] = type_result
+            
+            #
+            plot_cls = plot.Plot()
+            plot_cls.type( type_result , type_name  )
 
 
         #
@@ -409,7 +383,7 @@ class Utils:
 
     def csv_to_key( self , csv_file ):
 
-        key_list = list()
+        key_list = []
 
         with open( csv_file , newline='' ) as file:
 
@@ -427,7 +401,7 @@ class Utils:
         
         # ref list
 
-        reference_key_list = list()
+        reference_key_list = []
         #
         for filepath in filepath_list :
 
@@ -444,6 +418,36 @@ class Utils:
 
         #
         return reference_key_list
+
+    def negative_list( self , file_list ):
+
+        negative_list = []
+        
+        for index , file_path in enumerate( file_list ) :
+            
+            with open( file_path , 'r' ) as file:
+
+                value = file.read()
+
+                # str to int
+                value_int = int(value)
+
+                # check if value_int is negative
+                if value_int < 0 :
+
+                    negative_list.append( index )
+                    
+        
+        #
+        return negative_list
+
+    def del_negative_file( self , file_list , del_list ):
+
+        # remove index in del_list
+        file_list = numpy.delete( file_list, del_list ).tolist()
+
+        #
+        return file_list
 
 
 

@@ -15,15 +15,14 @@ class Plot:
 
 
         # create list which need to output
-        write_list_chromagram = [ 'stft','cqt','cens' ]
         write_list_method = [ 'binary','k_s','harmonic' ]
         write_list_score = [ 'raw','weighted' ]
 
 
         if chromagram_method == "midi" :
 
-            temp_name_list = list()
-            temp_value_list = list()
+            temp_name_list = []
+            temp_value_list = []
             
             for method in write_list_method:
 
@@ -39,26 +38,22 @@ class Plot:
             ax.legend()
 
         else:
+                
+            temp_name_list = []
+            temp_value_list = []
             
-            for chromagram in write_list_chromagram :
-                
-                temp_name_list = list()
-                temp_value_list = list()
-                
-                for method in write_list_method:
+            for method in write_list_method:
 
-                    for score in write_list_score :
+                for score in write_list_score :
 
-                        temp_name_list.append( method + "\n" + score )
-                        temp_value_list.append( result_dict[chromagram][method][score] )
-                        
-                # plot
-                if chromagram == chromagram_method :
+                    temp_name_list.append( method + "\n" + score )
+                    temp_value_list.append( result_dict[chromagram_method][method][score] )
                     
-                    ax.plot( temp_name_list , temp_value_list , label=chromagram )
-                    ax.set_ylabel( 'accuracy' )  
-                    ax.set_title( type_name ) 
-                    ax.legend()
+            # plot    
+            ax.plot( temp_name_list , temp_value_list , label=chromagram_method )
+            ax.set_ylabel( 'accuracy' )  
+            ax.set_title( type_name ) 
+            ax.legend()
     
 
         #

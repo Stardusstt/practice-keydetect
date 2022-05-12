@@ -34,7 +34,7 @@ class Path:
             raise OSError("Directory does not exist.")
 
         # get type
-        type_list = list()
+        type_list = []
 
         for temp_path in child_path.iterdir() :
 
@@ -67,7 +67,7 @@ class Path:
 
         #
         # get file list
-        readfile_list = list()
+        readfile_list = []
 
         # get typepath
         for temp_typepath in child_path.iterdir() :
